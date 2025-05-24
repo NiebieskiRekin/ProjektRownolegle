@@ -13,6 +13,7 @@ find_package(OpenMP COMPONENTS CXX)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
 # Define executable target
+include_directories(src)
 add_executable(projekt_rownolegle src/main.cpp src/some_code.cpp src/some_code.h src/some_code.cu)
 target_link_libraries(projekt_rownolegle ${OpenMP_LIBRARIES} CUDA::cudart)
 

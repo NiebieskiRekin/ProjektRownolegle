@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-// #include "src/some_code.h"
+#include "some_code.h"
 
 TEST(SomeCodeTest, SomeFunctionPrints) {
     // Capture stdout for testing output
@@ -7,7 +7,7 @@ TEST(SomeCodeTest, SomeFunctionPrints) {
     std::streambuf* oldCout = std::cout.rdbuf();
     std::cout.rdbuf(ss.rdbuf());
 
-    // someFunction();
+    someFunction();
 
     std::cout.rdbuf(oldCout); // Restore cout
 
