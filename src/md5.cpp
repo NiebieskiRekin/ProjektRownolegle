@@ -7,8 +7,6 @@
 #include <string>     
 #include <vector>     
  
-namespace hashing {
-namespace md5 {
 uint32_t leftRotate32bits(uint32_t n, std::size_t rotate) {
     return (n << rotate) | (n >> (32 - rotate));
 }
@@ -190,84 +188,4 @@ void* hash_bs(const void* input_bs, uint64_t input_size) {
 void* hash(const std::string& message) {
     return hash_bs(&message[0], message.size());
 }
-}  // namespace md5
-}  // namespace hashing
- 
-static void test() {
-    // Hashes empty string and stores signature
-    void* sig = hashing::md5::hash("");
-    std::cout << "Hashing empty string" << std::endl;
-    // Prints signature hex representation
-    std::cout << hashing::md5::sig2hex(sig) << std::endl << std::endl;
-    // Test with cassert whether sig is correct from the expected value
-    assert(hashing::md5::sig2hex(sig).compare(
-               "d41d8cd98f00b204e9800998ecf8427e") == 0);
- 
-    // Hashes "The quick brown fox jumps over the lazy dog" and stores signature
-    void* sig2 =
-        hashing::md5::hash("The quick brown fox jumps over the lazy dog");
-    std::cout << "Hashing The quick brown fox jumps over the lazy dog"
-              << std::endl;
-    // Prints signature hex representation
-    std::cout << hashing::md5::sig2hex(sig2) << std::endl << std::endl;
-    // Test with cassert whether sig is correct from the expected value
-    assert(hashing::md5::sig2hex(sig2).compare(
-               "9e107d9d372bb6826bd81d3542a419d6") == 0);
- 
-    // Hashes "The quick brown fox jumps over the lazy dog." (notice the
-    // additional period) and stores signature
-    void* sig3 =
-        hashing::md5::hash("The quick brown fox jumps over the lazy dog.");
-    std::cout << "Hashing "
-                 "The quick brown fox jumps over the lazy dog."
-              << std::endl;
-    // Prints signature hex representation
-    std::cout << hashing::md5::sig2hex(sig3) << std::endl << std::endl;
-    // Test with cassert whether sig is correct from the expected value
-    assert(hashing::md5::sig2hex(sig3).compare(
-               "e4d909c290d0fb1ca068ffaddf22cbd0") == 0);
- 
-    // Hashes "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-    // and stores signature
-    void* sig4 = hashing::md5::hash(
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
-    std::cout
-        << "Hashing "
-           "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-        << std::endl;
-    // Prints signature hex representation
-    std::cout << hashing::md5::sig2hex(sig4) << std::endl << std::endl;
-    // Test with cassert whether sig is correct from the expected value
-    assert(hashing::md5::sig2hex(sig4).compare(
-               "d174ab98d277d9f5a5611c2c9f419d9f") == 0);
-}
- 
-static void interactive() {
-    while (true) {
-        std::string input;
-        std::cout << "Enter a message to be hashed (Ctrl-C to exit): "
-                  << std::endl;
-        std::getline(std::cin, input);
-        void* sig = hashing::md5::hash(input);
-        std::cout << "Hash is: " << hashing::md5::sig2hex(sig) << std::endl;
- 
-        while (true) {
-            std::cout << "Want to enter another message? (y/n) ";
-            std::getline(std::cin, input);
-            if (input.compare("y") == 0) {
-                break;
-            } else if (input.compare("n") == 0) {
-                return;
-            }
-        }
-    }
-}
- 
-// int main() {
-//     test();  // run self-test implementations
- 
-//     // Launch interactive mode where user can input messages and see
-//     // their hash
-//     interactive();
-//     return 0;
-// }
+
