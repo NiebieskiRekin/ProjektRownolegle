@@ -22,8 +22,9 @@ my\_tests
 \*.pdb \# Program Database (for debugging on Windows)
 
 # Editor and IDE specific files
+.vscode/*
+!.vscode/c_cpp_properties.json
 
-.vscode/
 .idea/
 \*.iml
 \*.ipr
