@@ -35,7 +35,10 @@ endforeach ( )
 # Glob to list all source files
 file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS "src/*.cpp" "src/*.cu")
 file(GLOB_RECURSE PROJECT_TEST_SOURCES CONFIGURE_DEPENDS "src/*.cpp" "src/*.cu" "test/*.cpp" "test/*.cu")
-list(REMOVE_ITEM PROJECT_TEST_SOURCES "src/main.cpp")
+get_filename_component(full_path_main_cpp src/main.cpp ABSOLUTE)
+list(REMOVE_ITEM PROJECT_TEST_SOURCES ${full_path_main_cpp})
+message(${PROJECT_SOURCES})
+message(${PROJECT_TEST_SOURCES})
 
 # Define executable target
 add_executable(main) 
@@ -50,7 +53,5 @@ target_sources(main_test PRIVATE ${PROJECT_TEST_SOURCES})
 target_include_directories(main_test PRIVATE "src")
 target_include_directories(main_test PRIVATE "test")
 target_link_libraries(main_test ${GTEST_LIBRARIES} ${OpenMP_LIBRARIES}  CUDA::cudart)
-
-# Enable CTest integration
-enable_testing()
-add_test(NAME unit_tests COMMAND main_test)
+enable_testing(false)
+gtest_discover_tests(main_test)
