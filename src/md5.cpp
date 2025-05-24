@@ -263,11 +263,11 @@ static void interactive() {
     }
 }
  
-int main() {
-    test();  // run self-test implementations
+// int main() {
+//     test();  // run self-test implementations
  
-    // Launch interactive mode where user can input messages and see
-    // their hash
-    interactive();
-    return 0;
-}
+//     // Launch interactive mode where user can input messages and see
+//     // their hash
+//     interactive();
+//     return 0;
+// }

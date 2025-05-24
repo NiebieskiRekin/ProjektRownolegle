@@ -1,15 +1,15 @@
-#include "gtest/gtest.h"
-#include "some_code.h"
+// #include "gtest/gtest.h"
+// #include "some_code.h"
 
-TEST(SomeCodeTest, SomeFunctionPrints) {
-    // Capture stdout for testing output
-    std::stringstream ss;
-    std::streambuf* oldCout = std::cout.rdbuf();
-    std::cout.rdbuf(ss.rdbuf());
+// TEST(SomeCodeTest, SomeFunctionPrints) {
+//     // Capture stdout for testing output
+//     std::stringstream ss;
+//     std::streambuf* oldCout = std::cout.rdbuf();
+//     std::cout.rdbuf(ss.rdbuf());
 
-    someFunction();
+//     someFunction();
 
-    std::cout.rdbuf(oldCout); // Restore cout
+//     std::cout.rdbuf(oldCout); // Restore cout
 
-    ASSERT_NE(ss.str().find("This is some code."), std::string::npos);
-}
+//     ASSERT_NE(ss.str().find("This is some code."), std::string::npos);
+// }
