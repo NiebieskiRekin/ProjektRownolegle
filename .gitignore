@@ -1,0 +1,51 @@
+# Build artifacts
+
+build/
+CMakeCache.txt
+CMakeFiles/
+cmake\_install.cmake
+
+# Executables
+
+my\_app
+my\_tests
+\*.exe
+
+# Object files and libraries
+
+\*.o
+\*.obj
+\*.a
+\*.lib
+\*.so
+\*.dylib
+\*.pdb \# Program Database (for debugging on Windows)
+
+# Editor and IDE specific files
+
+.vscode/
+.idea/
+\*.iml
+\*.ipr
+\*.iws
+\*.suo
+\*.user
+\*.sln
+\*.vcxproj
+\*.vcxproj.filters
+
+# Temporary files and logs
+
+\*.log
+\*.tmp
+\*.swp
+\*\~
+
+# vcpkg build cache (can be large)
+
+vcpkg\_installed/
+vcpkg\_build/
+
+# Other
+
+.DS\_Store
