@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
-#include "md5.h"
+#include "utils.hpp"
+
 
 TEST(MD5Test, MD5Test1) {
     // Hashes empty string and stores signature

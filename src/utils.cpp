@@ -1,4 +1,4 @@
-#include "utils.h"
+#include "utils.hpp"
 
 uint32_t leftRotate32bits(uint32_t n, std::size_t rotate)
 {
@@ -49,4 +49,55 @@ std::string sig2hex(void *sig)
         hex.push_back(hexChars[(intsig[i]) & 0xF]);
     }
     return hex;
+}
+
+
+void processChunk(const uint8_t *padded_message, uint64_t chunk_start, const std::array<uint32_t, 64> &s, const std::array<uint32_t, 64> &K, uint32_t &a0, uint32_t &b0, uint32_t &c0, uint32_t &d0){
+    std::array<uint32_t, 16> blocks{};
+    uint32_t A = a0;
+    uint32_t B = b0;
+    uint32_t C = c0;
+    uint32_t D = d0;
+
+    // First, build the 16 32-bits blocks from the chunk
+    for (uint8_t bid = 0; bid < 16; bid++){
+        blocks[bid] = 0;
+        for (uint8_t cid = 0; cid < 4; cid++){
+            blocks[bid] = (blocks[bid] << 8) + padded_message[chunk_start + bid * 4 + cid];
+        }
+    }
+
+    // Main "hashing" loop
+    for (uint8_t i = 0; i < 64; i++){
+        uint32_t F = 0, g = 0;
+        if (i < 16){
+            F = (B & C) | ((~B) & D);
+            g = i;
+        }
+        else if (i < 32){
+            F = (D & B) | ((~D) & C);
+            g = (5 * i + 1) % 16;
+        }
+        else if (i < 48){
+            F = B ^ C ^ D;
+            g = (3 * i + 5) % 16;
+        }
+        else{
+            F = C ^ (B | (~D));
+            g = (7 * i) % 16;
+        }
+
+        // Update the accumulators
+        F += A + K[i] + toLittleEndian32(blocks[g]);
+
+        A = D;
+        D = C;
+        C = B;
+        B += leftRotate32bits(F, s[i]);
+    }
+    // Update the state with this chunk's hash
+    a0 += A;
+    b0 += B;
+    c0 += C;
+    d0 += D;
 }
