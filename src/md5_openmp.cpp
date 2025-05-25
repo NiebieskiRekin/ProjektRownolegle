@@ -74,15 +74,15 @@ void *hash_openmp(const void *input_bs, uint64_t input_size){
 
     for (uint64_t level = 1; level <= num_levels; ++level) {
         uint64_t num_nodes_at_level = levels[level - 1].size();
-        #pragma omp parallel
+        // #pragma omp parallel
         for (uint64_t i = 0; i < num_nodes_at_level; i += 2) {
             if (i + 1 < num_nodes_at_level) {
                 auto res = combineStates(levels[level - 1][i], levels[level - 1][i + 1]);
 
-                #pragma omp critical
+                // #pragma omp critical
                 levels[level].push_back(res);
             } else {
-                #pragma omp critical
+                // #pragma omp critical
                 levels[level].push_back(levels[level - 1][i]); // If odd number of nodes, carry the last one up
             }
         }
