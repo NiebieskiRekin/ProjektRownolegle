@@ -9,19 +9,8 @@
 
 #include "utils.hpp"
 
-
-
-void *hash_bs(const void *input_bs, uint64_t input_size){
-
-    auto *input = static_cast<const uint8_t *>(input_bs);
-
-    // The initial 128-bit state
-    uint32_t a0 = 0x67452301, A = 0;
-    uint32_t b0 = 0xefcdab89, B = 0;
-    uint32_t c0 = 0x98badcfe, C = 0;
-    uint32_t d0 = 0x10325476, D = 0;
-
-    // Step 1: Processing the bytestring
+std::vector<uint8_t> preprocess(const uint8_t *input, uint64_t input_size){
+    // Processing the bytestring
     // First compute the size the padded message will have
     // so it is possible to allocate the right amount of memory
     uint64_t padded_message_size = 0;
@@ -46,20 +35,36 @@ void *hash_bs(const void *input_bs, uint64_t input_size){
         padded_message[i] = 0;
     }
 
+    return std::move(padded_message);
+}
+
+void *hash_bs(const void *input_bs, uint64_t input_size){
+
+    auto *input = static_cast<const uint8_t *>(input_bs);
+
+    // The initial 128-bit state
+    uint32_t a0 = 0x67452301, A = 0;
+    uint32_t b0 = 0xefcdab89, B = 0;
+    uint32_t c0 = 0x98badcfe, C = 0;
+    uint32_t d0 = 0x10325476, D = 0;
+
+
+    auto padded_message = preprocess(input,input_size);
+
     // We then have to add the 64-bit size of the message at the end
     // When there is a conversion from int to bytestring or vice-versa
     // We always need to make sure it is little endian
     uint64_t input_bitsize_le = toLittleEndian64(input_size * 8);
 
     for (uint8_t i = 0; i < 8; i++){
-        padded_message[padded_message_size - 8 + i] = (input_bitsize_le >> (56 - 8 * i)) & 0xFF;
+        padded_message[padded_message.size() - 8 + i] = (input_bitsize_le >> (56 - 8 * i)) & 0xFF;
     }
 
     // Already allocate memory for blocks
     std::array<uint32_t, 16> blocks{};
 
     // Rounds
-    for (uint64_t chunk = 0; chunk * 64 < padded_message_size; chunk++){
+    for (uint64_t chunk = 0; chunk * 64 < padded_message.size(); chunk++){
         // First, build the 16 32-bits blocks from the chunk
         for (uint8_t bid = 0; bid < 16; bid++){
             blocks[bid] = 0;

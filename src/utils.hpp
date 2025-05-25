@@ -24,9 +24,10 @@ const std::array<uint32_t, 64> K = {
     4149444226, 3174756917, 718787259, 3951481745
 };
 
+const std::array<uint32_t, 4> initial_128_bit_state = {0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476};
+
 uint32_t leftRotate32bits(uint32_t n, std::size_t rotate);
 bool isBigEndian();
 uint32_t toLittleEndian32(uint32_t n);
 uint64_t toLittleEndian64(uint64_t n);
 std::string sig2hex(void *sig);
-void processChunk(const uint8_t *padded_message, uint64_t chunk_start, const std::array<uint32_t, 64> &s, const std::array<uint32_t, 64> &K, uint32_t &a0, uint32_t &b0, uint32_t &c0, uint32_t &d0);

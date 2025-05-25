@@ -10,15 +10,65 @@
 
 #include "utils.hpp"
 
+
+void processChunk(const uint8_t *padded_message, uint64_t chunk_start, uint32_t &a0, uint32_t &b0, uint32_t &c0, uint32_t &d0){
+    std::array<uint32_t, 16> blocks{};
+    uint32_t A = a0;
+    uint32_t B = b0;
+    uint32_t C = c0;
+    uint32_t D = d0;
+
+    // First, build the 16 32-bits blocks from the chunk
+    for (uint8_t bid = 0; bid < 16; bid++){
+        blocks[bid] = 0;
+        for (uint8_t cid = 0; cid < 4; cid++){
+            blocks[bid] = (blocks[bid] << 8) + padded_message[chunk_start + bid * 4 + cid];
+        }
+    }
+
+    // Main "hashing" loop
+    for (uint8_t i = 0; i < 64; i++){
+        uint32_t F = 0, g = 0;
+        if (i < 16){
+            F = (B & C) | ((~B) & D);
+            g = i;
+        }
+        else if (i < 32){
+            F = (D & B) | ((~D) & C);
+            g = (5 * i + 1) % 16;
+        }
+        else if (i < 48){
+            F = B ^ C ^ D;
+            g = (3 * i + 5) % 16;
+        }
+        else{
+            F = C ^ (B | (~D));
+            g = (7 * i) % 16;
+        }
+
+        // Update the accumulators
+        F += A + K[i] + toLittleEndian32(blocks[g]);
+
+        A = D;
+        D = C;
+        C = B;
+        B += leftRotate32bits(F, s[i]);
+    }
+    // Update the state with this chunk's hash
+    a0 += A;
+    b0 += B;
+    c0 += C;
+    d0 += D;
+}
+
 void *hash_bs_openmp(const void *input_bs, uint64_t input_size){
     auto *input = static_cast<const uint8_t *>(input_bs);
 
     // The initial 128-bit state
-    std::array<uint32_t, 4> state = {0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476};
-    std::array<uint32_t, 4> original_state = state;
+    std::array<uint32_t, 4> state = initial_128_bit_state;
+    std::array<uint32_t, 4> original_state = initial_128_bit_state;
 
     // Step 1: Processing the bytestring
-
     uint64_t padded_message_size = input_size;
     if (input_size % 64 < 56){
         padded_message_size = input_size + 64 - (input_size % 64);
@@ -46,11 +96,11 @@ void *hash_bs_openmp(const void *input_bs, uint64_t input_size){
         uint32_t b0 = chunk_states[chunk][1];
         uint32_t c0 = chunk_states[chunk][2];
         uint32_t d0 = chunk_states[chunk][3];
-        processChunk(padded_message.data(), chunk * 64, s, K, a0, b0, c0, d0);
+        processChunk(padded_message.data(), chunk * 64, a0, b0, c0, d0);
         chunk_states[chunk] = {a0, b0, c0, d0};
     }
 
-    // Combine the results (in MD5, this is a sequential accumulation)
+    // Combine the results sequentially
     for (auto &state : chunk_states){
         state[0] += original_state[0];
         state[1] += original_state[1];
