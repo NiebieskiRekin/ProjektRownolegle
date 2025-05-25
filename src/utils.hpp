@@ -3,6 +3,12 @@
 #include <array>
 #include <string>
 #include <vector>
+#include <random>
+
+const std::string characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+std::random_device random_device;
+std::mt19937 generator(random_device());
+std::uniform_int_distribution<> distribution(0, characters.size() - 1);
 
 const std::array<uint32_t, 64> s = {
     7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
@@ -34,3 +40,4 @@ uint64_t toLittleEndian64(uint64_t n);
 std::string sig2hex(void *sig);
 std::vector<uint8_t> preprocess(const uint8_t *input, uint64_t input_size);
 uint8_t * build_signature(uint32_t &a0, uint32_t &b0, uint32_t &c0, uint32_t &d0);
+std::string generate_random_string(size_t length);

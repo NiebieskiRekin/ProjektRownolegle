@@ -1,4 +1,5 @@
 #include "utils.hpp"
+#include <algorithm>
 
 uint32_t leftRotate32bits(uint32_t n, std::size_t rotate)
 {
@@ -94,4 +95,11 @@ uint8_t * build_signature(uint32_t &a0, uint32_t &b0, uint32_t &c0, uint32_t &d0
         sig[i + 12] = (d0 >> (8 * i)) & 0xFF;
     }
     return sig;
+}
+
+std::string generate_random_string(size_t length) {
+    std::string random_string(characters);
+    std::shuffle(random_string.begin(), random_string.end(), generator);
+
+    return random_string.substr(0, length);
 }
