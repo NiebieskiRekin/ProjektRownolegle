@@ -7,62 +7,48 @@
 #include <string>
 #include <vector>
 #include <omp.h>
+#include <cmath>
 
 #include "utils.hpp"
 #include "md5_sequential.hpp"
 
+std::array<uint32_t, 4> combineStates(const std::array<uint32_t, 4>& state1, const std::array<uint32_t, 4>& state2) {
+    std::vector<uint8_t> combined_input(32);
 
-// void processChunk(const uint8_t *padded_message, uint64_t chunk_start, uint32_t &a0, uint32_t &b0, uint32_t &c0, uint32_t &d0){
-//     std::array<uint32_t, 16> blocks{};
-//     uint32_t A = a0;
-//     uint32_t B = b0;
-//     uint32_t C = c0;
-//     uint32_t D = d0;
+    // Serialize state1 to bytes (little endian)
+    for (uint8_t i = 0; i < 4; ++i) {
+        combined_input[i * 4 + 0] = (state1[i] >> 0) & 0xFF;
+        combined_input[i * 4 + 1] = (state1[i] >> 8) & 0xFF;
+        combined_input[i * 4 + 2] = (state1[i] >> 16) & 0xFF;
+        combined_input[i * 4 + 3] = (state1[i] >> 24) & 0xFF;
+    }
 
-//     // First, build the 16 32-bits blocks from the chunk
-//     for (uint8_t bid = 0; bid < 16; bid++){
-//         blocks[bid] = 0;
-//         for (uint8_t cid = 0; cid < 4; cid++){
-//             blocks[bid] = (blocks[bid] << 8) + padded_message[chunk_start + bid * 4 + cid];
-//         }
-//     }
+    // Serialize state2 to bytes (little endian)
+    for (uint8_t i = 0; i < 4; ++i) {
+        combined_input[16 + i * 4 + 0] = (state2[i] >> 0) & 0xFF;
+        combined_input[16 + i * 4 + 1] = (state2[i] >> 8) & 0xFF;
+        combined_input[16 + i * 4 + 2] = (state2[i] >> 16) & 0xFF;
+        combined_input[16 + i * 4 + 3] = (state2[i] >> 24) & 0xFF;
+    }
 
-//     // Main "hashing" loop
-//     for (uint8_t i = 0; i < 64; i++){
-//         uint32_t F = 0, g = 0;
-//         if (i < 16){
-//             F = (B & C) | ((~B) & D);
-//             g = i;
-//         }
-//         else if (i < 32){
-//             F = (D & B) | ((~D) & C);
-//             g = (5 * i + 1) % 16;
-//         }
-//         else if (i < 48){
-//             F = B ^ C ^ D;
-//             g = (3 * i + 5) % 16;
-//         }
-//         else{
-//             F = C ^ (B | (~D));
-//             g = (7 * i) % 16;
-//         }
+    // Hash the combined input using MD5
+    void* hash_result = hash_sequential(combined_input.data(), 32);
+    auto* hash_bytes = static_cast<uint8_t*>(hash_result);
 
-//         // Update the accumulators
-//         F += A + K[i] + toLittleEndian32(blocks[g]);
+    // Convert the resulting 16-byte MD5 digest back to a 4-element uint32_t array (little endian)
+    std::array<uint32_t, 4> combined_state;
+    for (uint8_t i = 0; i < 4; ++i) {
+        combined_state[i] = (static_cast<uint32_t>(hash_bytes[i * 4 + 0]) << 0) |
+                             (static_cast<uint32_t>(hash_bytes[i * 4 + 1]) << 8) |
+                             (static_cast<uint32_t>(hash_bytes[i * 4 + 2]) << 16) |
+                             (static_cast<uint32_t>(hash_bytes[i * 4 + 3]) << 24);
+    }
 
-//         A = D;
-//         D = C;
-//         C = B;
-//         B += leftRotate32bits(F, s[i]);
-//     }
-//     // Update the state with this chunk's hash
-//     a0 += A;
-//     b0 += B;
-//     c0 += C;
-//     d0 += D;
-// }
+    delete[] hash_bytes;
+    return combined_state;
+}
 
-void *hash_bs_openmp(const void *input_bs, uint64_t input_size){
+void *hash_openmp(const void *input_bs, uint64_t input_size){
     auto *input = static_cast<const uint8_t *>(input_bs);
 
     // The initial 128-bit state
@@ -74,31 +60,35 @@ void *hash_bs_openmp(const void *input_bs, uint64_t input_size){
     std::vector<std::array<uint32_t, 4>> chunk_states(num_chunks, original_state);
 
 #pragma omp parallel for
-    for (uint64_t chunk = 0; chunk < num_chunks; ++chunk){
-        uint32_t a0 = chunk_states[chunk][0];
-        uint32_t b0 = chunk_states[chunk][1];
-        uint32_t c0 = chunk_states[chunk][2];
-        uint32_t d0 = chunk_states[chunk][3];
-        process_chunk_sequential(padded_message.data(), chunk * 64, a0, b0, c0, d0);
-        chunk_states[chunk] = {a0, b0, c0, d0};
+    for (uint64_t i = 0; i < num_chunks; i++){
+        process_chunk_sequential(padded_message.data(), i * 64, chunk_states[i][0], chunk_states[i][1], chunk_states[i][2], chunk_states[i][3]);
     }
 
-    // Combine the results sequentially
-    for (auto &state : chunk_states){
-        state[0] += original_state[0];
-        state[1] += original_state[1];
-        state[2] += original_state[2];
-        state[3] += original_state[3];
-        original_state = state; // Accumulate for the next chunk (though not strictly parallelizable this way for final result)
+    // Merkle tree-like reduction of chunk states
+    uint64_t num_levels = std::ceil(std::log2(num_chunks));
+    std::vector<std::vector<std::array<uint32_t, 4>>> levels(num_levels + 1);
+    levels[0] = chunk_states;
+
+    for (uint64_t level = 1; level <= num_levels; ++level) {
+        uint64_t num_nodes_at_level = levels[level - 1].size();
+        for (uint64_t i = 0; i < num_nodes_at_level; i += 2) {
+            if (i + 1 < num_nodes_at_level) {
+                levels[level].push_back(combineStates(levels[level - 1][i], levels[level - 1][i + 1]));
+            } else {
+                levels[level].push_back(levels[level - 1][i]); // If odd number of nodes, carry the last one up
+            }
+        }
     }
+
+    std::array<uint32_t, 4> final_state = levels[num_levels][0];
 
     // Build signature from the final state
-    auto *sig = build_signature(original_state[0],original_state[1],original_state[2],original_state[3]);
+    auto *sig = build_signature(final_state[0],final_state[1],final_state[2],final_state[3]);
     return sig;
 }
 
 void *hash_openmp(const std::string &message)
 {
-    return hash_bs_openmp(&message[0], message.size());
+    return hash_openmp(&message[0], message.size());
 }
 
