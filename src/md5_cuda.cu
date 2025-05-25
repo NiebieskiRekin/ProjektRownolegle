@@ -1,4 +1,4 @@
-#include "md5_cuda.hpp"
+#include "md5_cuda.cuh"
 
 // Host-side wrapper to launch the CUDA MD5 kernel
 uint8_t* hash_cuda(const void* input_bs, uint64_t input_size) {
