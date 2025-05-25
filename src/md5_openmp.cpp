@@ -16,6 +16,7 @@ std::array<uint32_t, 4> combineStates(const std::array<uint32_t, 4>& state1, con
     std::vector<uint8_t> combined_input(32);
 
     // Serialize state1 to bytes (little endian)
+    #pragma omp simd
     for (uint8_t i = 0; i < 4; ++i) {
         combined_input[i * 4 + 0] = (state1[i] >> 0) & 0xFF;
         combined_input[i * 4 + 1] = (state1[i] >> 8) & 0xFF;
@@ -24,6 +25,7 @@ std::array<uint32_t, 4> combineStates(const std::array<uint32_t, 4>& state1, con
     }
 
     // Serialize state2 to bytes (little endian)
+    #pragma omp simd
     for (uint8_t i = 0; i < 4; ++i) {
         combined_input[16 + i * 4 + 0] = (state2[i] >> 0) & 0xFF;
         combined_input[16 + i * 4 + 1] = (state2[i] >> 8) & 0xFF;
@@ -37,6 +39,7 @@ std::array<uint32_t, 4> combineStates(const std::array<uint32_t, 4>& state1, con
 
     // Convert the resulting 16-byte MD5 digest back to a 4-element uint32_t array (little endian)
     std::array<uint32_t, 4> combined_state;
+    #pragma omp simd
     for (uint8_t i = 0; i < 4; ++i) {
         combined_state[i] = (static_cast<uint32_t>(hash_bytes[i * 4 + 0]) << 0) |
                              (static_cast<uint32_t>(hash_bytes[i * 4 + 1]) << 8) |
@@ -59,7 +62,7 @@ void *hash_openmp(const void *input_bs, uint64_t input_size){
     uint64_t num_chunks = padded_message.size() / 64;
     std::vector<std::array<uint32_t, 4>> chunk_states(num_chunks, original_state);
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for (uint64_t i = 0; i < num_chunks; i++){
         process_chunk_sequential(padded_message.data(), i * 64, chunk_states[i][0], chunk_states[i][1], chunk_states[i][2], chunk_states[i][3]);
     }
@@ -71,10 +74,15 @@ void *hash_openmp(const void *input_bs, uint64_t input_size){
 
     for (uint64_t level = 1; level <= num_levels; ++level) {
         uint64_t num_nodes_at_level = levels[level - 1].size();
+        #pragma omp parallel
         for (uint64_t i = 0; i < num_nodes_at_level; i += 2) {
             if (i + 1 < num_nodes_at_level) {
-                levels[level].push_back(combineStates(levels[level - 1][i], levels[level - 1][i + 1]));
+                auto res = combineStates(levels[level - 1][i], levels[level - 1][i + 1]);
+
+                #pragma omp critical
+                levels[level].push_back(res);
             } else {
+                #pragma omp critical
                 levels[level].push_back(levels[level - 1][i]); // If odd number of nodes, carry the last one up
             }
         }

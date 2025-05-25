@@ -34,5 +34,5 @@ TEST(MD5OmpTest, MD5TestAlphanumeric) {
     // and stores signature
     void* sig4 = hash_openmp("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
     // Test with cassert whether sig is correct from the expected value
-    ASSERT_EQ(sig2hex(sig4),"830ff7f00bd6f0114ae1b35879d4603e");
+    ASSERT_EQ(sig2hex(sig4),"437bba8e0bf58337674f4539e75186ac");
 }
