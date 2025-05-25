@@ -5,11 +5,6 @@
 #include <vector>
 #include <random>
 
-const std::string characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-std::random_device random_device;
-std::mt19937 generator(random_device());
-std::uniform_int_distribution<> distribution(0, characters.size() - 1);
-
 const std::array<uint32_t, 64> s = {
     7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
     5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20,

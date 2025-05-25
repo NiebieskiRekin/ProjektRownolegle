@@ -1,6 +1,11 @@
 #include "utils.hpp"
 #include <algorithm>
 
+const std::string characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+std::random_device random_device;
+std::mt19937 generator(random_device());
+std::uniform_int_distribution<> distribution(0, characters.size() - 1);
+
 uint32_t leftRotate32bits(uint32_t n, std::size_t rotate)
 {
     return (n << rotate) | (n >> (32 - rotate));
