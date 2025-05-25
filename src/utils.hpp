@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <array>
 #include <string>
+#include <vector>
 
 const std::array<uint32_t, 64> s = {
     7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
@@ -31,3 +32,5 @@ bool isBigEndian();
 uint32_t toLittleEndian32(uint32_t n);
 uint64_t toLittleEndian64(uint64_t n);
 std::string sig2hex(void *sig);
+std::vector<uint8_t> preprocess(const uint8_t *input, uint64_t input_size);
+uint8_t * build_signature(uint32_t &a0, uint32_t &b0, uint32_t &c0, uint32_t &d0);

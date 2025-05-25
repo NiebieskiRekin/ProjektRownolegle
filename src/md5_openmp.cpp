@@ -65,7 +65,6 @@ void *hash_bs_openmp(const void *input_bs, uint64_t input_size){
     auto *input = static_cast<const uint8_t *>(input_bs);
 
     // The initial 128-bit state
-    std::array<uint32_t, 4> state = initial_128_bit_state;
     std::array<uint32_t, 4> original_state = initial_128_bit_state;
 
     // Step 1: Processing the bytestring
