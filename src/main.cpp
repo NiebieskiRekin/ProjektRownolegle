@@ -1,11 +1,8 @@
 #include <iostream>
-#include "some_code.h"
 #include <omp.h>
 #include <cuda_runtime.h>
 
 int main() {
-    std::cout << "Hello from the main application!" << std::endl;
-    someFunction();
 
     int num_threads = omp_get_max_threads();
     std::cout << "Running with OpenMP, max threads: " << num_threads << std::endl;
