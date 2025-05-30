@@ -13,6 +13,8 @@
 size_t get_file_size(std::ifstream& file){
     std::streampos begin,end;
     file.seekg(0, std::ios::end);
+    end = file.tellg();
+    file.seekg(0, std::ios::beg);
     begin = file.tellg();
     return (end-begin);
 }
