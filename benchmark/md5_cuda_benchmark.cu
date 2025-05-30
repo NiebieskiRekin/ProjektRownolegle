@@ -43,7 +43,8 @@ static void BM_CudaMD5_Large(benchmark::State& state) {
     }
     state.SetBytesProcessed(int64_t(state.iterations()) * state.range(0));
 }
-BENCHMARK(BM_CudaMD5_Large)->RangeMultiplier(8)->Range(2 * 1024 * 1024, 4 * 1024UL * 1024UL * 1024UL);
+BENCHMARK(BM_CudaMD5_Large)->RangeMultiplier(8)->Range(2 * 1024 * 1024, 1024UL * 1024UL * 1024UL);
+
 
 static void BM_CudaKernel(benchmark::State& state) {
     const std::vector<uint8_t> h_data_in(state.range(0),0xAB);
@@ -56,6 +57,8 @@ static void BM_CudaKernel(benchmark::State& state) {
     cudaMemcpy(d_padded_message, padded_message.data(), padded_size, cudaMemcpyHostToDevice);
     uint32_t* d_states;
     cudaMalloc(&d_states, num_chunks * 4 * sizeof(uint32_t));
+    const int threadsPerBlock = state.range(1);
+    int numBlocks = (num_chunks + threadsPerBlock - 1) / threadsPerBlock;
 
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
@@ -63,16 +66,18 @@ static void BM_CudaKernel(benchmark::State& state) {
 
     for (auto _ : state) {
         cudaEventRecord(start, 0);
-        process_chunks_kernel<<<state.range(1), state.range(2)>>>(d_padded_message, state.range(0),d_states);
+        process_chunks_kernel<<<numBlocks, threadsPerBlock>>>(d_padded_message, state.range(0),d_states);
         cudaEventRecord(stop, 0);
         cudaEventSynchronize(stop);
+        benchmark::DoNotOptimize(d_states);
         float elapsed_time_ms;
         cudaEventElapsedTime(&elapsed_time_ms, start, stop);
         state.SetIterationTime(elapsed_time_ms / 1000.0); // Set time per iteration in seconds
     }
 
-    // Set bytes processed
+    // // Set bytes processed
     state.SetBytesProcessed(int64_t(state.iterations()) * state.range(0) * sizeof(float));
+    // state.SetLabel(std::to_string(state.range(0)));
 
     cudaEventDestroy(start);
     cudaEventDestroy(stop);
@@ -80,6 +85,9 @@ static void BM_CudaKernel(benchmark::State& state) {
     cudaFree(d_states);
 }
 BENCHMARK(BM_CudaKernel)
-    ->Range(1024, 1024 * 1024) // Data size
-    ->Ranges({{1, 256}, {1, 1024}}) // Block and thread dimensions
+    // ->MinWarmUpTime(10)
+    ->ArgsProduct({
+        benchmark::CreateRange(1024, 1024UL * 1024UL * 1024UL, 256), // Data size
+        {16, 32, 64, 128, 256, 512, 1024} // Block and thread dimensions
+    })
     ->Unit(benchmark::kMicrosecond);
