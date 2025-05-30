@@ -16,7 +16,6 @@ std::array<uint32_t, 4> combineStates(const std::array<uint32_t, 4>& state1, con
     std::vector<uint8_t> combined_input(32);
 
     // Serialize state1 to bytes (little endian)
-    #pragma omp simd
     for (uint8_t i = 0; i < 4; ++i) {
         combined_input[i * 4 + 0] = (state1[i] >> 0) & 0xFF;
         combined_input[i * 4 + 1] = (state1[i] >> 8) & 0xFF;
@@ -25,7 +24,6 @@ std::array<uint32_t, 4> combineStates(const std::array<uint32_t, 4>& state1, con
     }
 
     // Serialize state2 to bytes (little endian)
-    #pragma omp simd
     for (uint8_t i = 0; i < 4; ++i) {
         combined_input[16 + i * 4 + 0] = (state2[i] >> 0) & 0xFF;
         combined_input[16 + i * 4 + 1] = (state2[i] >> 8) & 0xFF;
@@ -38,7 +36,6 @@ std::array<uint32_t, 4> combineStates(const std::array<uint32_t, 4>& state1, con
 
     // Convert the resulting 16-byte MD5 digest back to a 4-element uint32_t array (little endian)
     std::array<uint32_t, 4> combined_state;
-    #pragma omp simd
     for (uint8_t i = 0; i < 4; ++i) {
         combined_state[i] = (static_cast<uint32_t>(hash_result[i * 4 + 0]) << 0) |
                              (static_cast<uint32_t>(hash_result[i * 4 + 1]) << 8) |
@@ -53,12 +50,12 @@ std::array<uint8_t, 16> hash_openmp(const void *input_bs, uint64_t input_size){
     auto *input = static_cast<const uint8_t *>(input_bs);
 
     // The initial 128-bit state
-    std::array<uint32_t, 4> original_state = initial_128_bit_state;
+    std::array<uint32_t, 4> state = initial_128_bit_state;
 
     auto padded_message = preprocess(input,input_size);
 
     uint64_t num_chunks = padded_message.size() / 64;
-    std::vector<std::array<uint32_t, 4>> chunk_states(num_chunks, original_state);
+    std::vector<std::array<uint32_t, 4>> chunk_states(num_chunks, state);
 
     #pragma omp parallel for
     for (uint64_t i = 0; i < num_chunks; i++){
