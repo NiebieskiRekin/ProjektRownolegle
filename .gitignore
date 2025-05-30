@@ -50,3 +50,12 @@ vcpkg\_build/
 # Other
 
 .DS\_Store
+extra/uv.lock
+extra/pyproject.toml
+extra/script.py
+extra/prop_json.cu
+extra/out3.svg
+.gitignore
+extra/out1.svg
+extra/.python-version
+extra/out2.svg
