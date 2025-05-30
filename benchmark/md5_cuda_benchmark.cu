@@ -5,37 +5,7 @@
 
 #include "md5_cuda.cuh"
 
-static void BM_CudaMD5_Tiny(benchmark::State& state) {
-    std::string message(state.range(0), 'a');
-    for (auto _ : state) {
-        auto result = hash_cuda(message);
-        benchmark::DoNotOptimize(result);
-    }
-    state.SetBytesProcessed(int64_t(state.iterations()) * state.range(0));
-}
-BENCHMARK(BM_CudaMD5_Tiny)->RangeMultiplier(2)->Range(8, 8 * 1024);
-
-static void BM_CudaMD5_Small(benchmark::State& state) {
-    std::string message(state.range(0), 'b');
-    for (auto _ : state) {
-        auto result = hash_cuda(message);
-        benchmark::DoNotOptimize(result);
-    }
-    state.SetBytesProcessed(int64_t(state.iterations()) * state.range(0));
-}
-BENCHMARK(BM_CudaMD5_Small)->RangeMultiplier(4)->Range(16 * 1024, 256 * 1024);
-
-static void BM_CudaMD5_Medium(benchmark::State& state) {
-    std::string message(state.range(0), 'c');
-    for (auto _ : state) {
-        auto result = hash_cuda(message);
-        benchmark::DoNotOptimize(result);
-    }
-    state.SetBytesProcessed(int64_t(state.iterations()) * state.range(0));
-}
-BENCHMARK(BM_CudaMD5_Medium)->RangeMultiplier(8)->Range(512 * 1024, 4 * 1024 * 1024);
-
-static void BM_CudaMD5_Large(benchmark::State& state) {
+static void BM_CudaMD5(benchmark::State& state) {
     std::string message(state.range(0), 'd');
     for (auto _ : state) {
         auto result = hash_cuda(message);
@@ -43,7 +13,7 @@ static void BM_CudaMD5_Large(benchmark::State& state) {
     }
     state.SetBytesProcessed(int64_t(state.iterations()) * state.range(0));
 }
-BENCHMARK(BM_CudaMD5_Large)->RangeMultiplier(8)->Range(2 * 1024 * 1024, 1024UL * 1024UL * 1024UL);
+BENCHMARK(BM_CudaMD5)->Range(1024, 2*1024UL * 1024UL * 1024UL);
 
 
 static void BM_CudaKernel(benchmark::State& state) {

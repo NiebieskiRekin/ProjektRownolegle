@@ -6,37 +6,7 @@
 #include "utils.hpp"
 #include "md5_sequential.hpp"
 
-static void BM_SequentialMD5_Tiny(benchmark::State& state) {
-    std::string message(state.range(0), 'a');
-    for (auto _ : state) {
-        auto result = hash_sequential(message);
-        benchmark::DoNotOptimize(result);
-    }
-    state.SetBytesProcessed(int64_t(state.iterations()) * state.range(0));
-}
-BENCHMARK(BM_SequentialMD5_Tiny)->RangeMultiplier(2)->Range(8, 8 * 1024);
-
-static void BM_SequentialMD5_Small(benchmark::State& state) {
-    std::string message(state.range(0), 'b');
-    for (auto _ : state) {
-        auto result = hash_sequential(message);
-        benchmark::DoNotOptimize(result);
-    }
-    state.SetBytesProcessed(int64_t(state.iterations()) * state.range(0));
-}
-BENCHMARK(BM_SequentialMD5_Small)->RangeMultiplier(4)->Range(16 * 1024, 256 * 1024);
-
-static void BM_SequentialMD5_Medium(benchmark::State& state) {
-    std::string message(state.range(0), 'c');
-    for (auto _ : state) {
-        auto result = hash_sequential(message);
-        benchmark::DoNotOptimize(result);
-    }
-    state.SetBytesProcessed(int64_t(state.iterations()) * state.range(0));
-}
-BENCHMARK(BM_SequentialMD5_Medium)->RangeMultiplier(8)->Range(512 * 1024, 4 * 1024 * 1024);
-
-static void BM_SequentialMD5_Large(benchmark::State& state) {
+static void BM_SequentialMD5(benchmark::State& state) {
     std::string message(state.range(0), 'd');
     for (auto _ : state) {
         auto result = hash_sequential(message);
@@ -44,4 +14,4 @@ static void BM_SequentialMD5_Large(benchmark::State& state) {
     }
     state.SetBytesProcessed(int64_t(state.iterations()) * state.range(0));
 }
-BENCHMARK(BM_SequentialMD5_Large)->RangeMultiplier(8)->Range(2 * 1024 * 1024, 4 * 1024UL * 1024UL * 1024UL);
+BENCHMARK(BM_SequentialMD5)->Range(1024, 2*1024UL * 1024UL * 1024UL);
