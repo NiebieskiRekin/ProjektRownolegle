@@ -7,5 +7,5 @@
 #include "utils.hpp"
 #include "md5_kernels.cuh"
 
-uint8_t* hash_cuda(const void* input_bs, uint64_t input_size);
-uint8_t* hash_cuda(const std::string& message);
+std::array<uint8_t, 16> hash_cuda(const void* input_bs, uint64_t input_size);
+std::array<uint8_t, 16> hash_cuda(const std::string& message);

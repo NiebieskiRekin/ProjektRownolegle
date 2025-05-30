@@ -44,15 +44,14 @@ uint64_t toLittleEndian64(uint64_t n)
     }
     return n;
 }
-std::string sig2hex(void *sig)
+std::string sig2hex(const uint8_t *sig)
 {
     const char *hexChars = "0123456789abcdef";
-    auto *intsig = static_cast<uint8_t *>(sig);
     std::string hex = "";
     for (uint8_t i = 0; i < 16; i++)
     {
-        hex.push_back(hexChars[(intsig[i] >> 4) & 0xF]);
-        hex.push_back(hexChars[(intsig[i]) & 0xF]);
+        hex.push_back(hexChars[(sig[i] >> 4) & 0xF]);
+        hex.push_back(hexChars[(sig[i]) & 0xF]);
     }
     return hex;
 }
@@ -90,9 +89,9 @@ std::vector<uint8_t> preprocess(const uint8_t *input, uint64_t input_size){
     return padded_message;
 }
 
-uint8_t * build_signature(uint32_t &a0, uint32_t &b0, uint32_t &c0, uint32_t &d0){
+std::array<uint8_t, 16> build_signature(uint32_t a0, uint32_t b0, uint32_t c0, uint32_t d0){
     // Build signature from the final state
-    auto *sig = new uint8_t[16];
+    std::array<uint8_t, 16> sig{};
     for (uint8_t i = 0; i < 4; i++){
         sig[i] = (a0 >> (8 * i)) & 0xFF;
         sig[i + 4] = (b0 >> (8 * i)) & 0xFF;

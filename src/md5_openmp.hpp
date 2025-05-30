@@ -1,5 +1,5 @@
 #pragma once
 #include "utils.hpp"
 
-void *hash_openmp(const void *input_bs, uint64_t input_size);
-void *hash_openmp(const std::string &message);
+std::array<uint8_t, 16> hash_openmp(const void *input_bs, uint64_t input_size);
+std::array<uint8_t, 16> hash_openmp(const std::string &message);

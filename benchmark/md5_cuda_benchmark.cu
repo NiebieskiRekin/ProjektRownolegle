@@ -3,6 +3,9 @@
 // #include <vector>
 // #include <cuda_runtime.h>
 
+// #include "md5_cuda.cuh"
+// #include "md5_kernels.cuh"
+
 // static void BM_CudaKernel(benchmark::State& state) {
 //     // Allocate device memory (if needed)
 //     float *d_data;
@@ -20,7 +23,7 @@
 
 //     for (auto _ : state) {
 //         cudaEventRecord(start, 0);
-//         your_kernel<<<state.range(1), state.range(2)>>>(d_data, state.range(0));
+//         process_chunks_kernel<<<state.range(1), state.range(2)>>>(d_data, state.range(0));
 //         cudaEventRecord(stop, 0);
 //         cudaEventSynchronize(stop);
 //         float elapsed_time_ms;

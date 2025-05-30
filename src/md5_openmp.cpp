@@ -34,24 +34,22 @@ std::array<uint32_t, 4> combineStates(const std::array<uint32_t, 4>& state1, con
     }
 
     // Hash the combined input using MD5
-    void* hash_result = hash_sequential(combined_input.data(), 32);
-    auto* hash_bytes = static_cast<uint8_t*>(hash_result);
+    auto hash_result = hash_sequential(combined_input.data(), 32);
 
     // Convert the resulting 16-byte MD5 digest back to a 4-element uint32_t array (little endian)
     std::array<uint32_t, 4> combined_state;
     #pragma omp simd
     for (uint8_t i = 0; i < 4; ++i) {
-        combined_state[i] = (static_cast<uint32_t>(hash_bytes[i * 4 + 0]) << 0) |
-                             (static_cast<uint32_t>(hash_bytes[i * 4 + 1]) << 8) |
-                             (static_cast<uint32_t>(hash_bytes[i * 4 + 2]) << 16) |
-                             (static_cast<uint32_t>(hash_bytes[i * 4 + 3]) << 24);
+        combined_state[i] = (static_cast<uint32_t>(hash_result[i * 4 + 0]) << 0) |
+                             (static_cast<uint32_t>(hash_result[i * 4 + 1]) << 8) |
+                             (static_cast<uint32_t>(hash_result[i * 4 + 2]) << 16) |
+                             (static_cast<uint32_t>(hash_result[i * 4 + 3]) << 24);
     }
 
-    delete[] hash_bytes;
     return combined_state;
 }
 
-void *hash_openmp(const void *input_bs, uint64_t input_size){
+std::array<uint8_t, 16> hash_openmp(const void *input_bs, uint64_t input_size){
     auto *input = static_cast<const uint8_t *>(input_bs);
 
     // The initial 128-bit state
@@ -91,11 +89,11 @@ void *hash_openmp(const void *input_bs, uint64_t input_size){
     std::array<uint32_t, 4> final_state = levels[num_levels][0];
 
     // Build signature from the final state
-    auto *sig = build_signature(final_state[0],final_state[1],final_state[2],final_state[3]);
+    auto sig = build_signature(final_state[0],final_state[1],final_state[2],final_state[3]);
     return sig;
 }
 
-void *hash_openmp(const std::string &message)
+std::array<uint8_t, 16> hash_openmp(const std::string &message)
 {
     return hash_openmp(&message[0], message.size());
 }

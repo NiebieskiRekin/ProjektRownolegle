@@ -62,7 +62,7 @@ void process_chunk_sequential(const uint8_t *padded_message, uint64_t chunk_star
 
 
 
-void *hash_sequential(const void *input_bs, uint64_t input_size){
+std::array<uint8_t, 16> hash_sequential(const void *input_bs, uint64_t input_size){
 
     auto *input = static_cast<const uint8_t *>(input_bs);
 
@@ -79,7 +79,7 @@ void *hash_sequential(const void *input_bs, uint64_t input_size){
     return sig;
 }
 
-void *hash_sequential(const std::string &message){
+std::array<uint8_t, 16> hash_sequential(const std::string &message){
     return hash_sequential(&message[0], message.size());
 }
 
