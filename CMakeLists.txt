@@ -5,9 +5,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_COMPILER g++-13) # required for cuda
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Set cuda configuration
-set(CUDA_DIR "/usr/local/cuda-12.5/lib64/cmake")
+# set(CUDA_DIR "/usr/local/cuda-12.5/lib64/cmake")
 set(CMAKE_CUDA_ARCHITECTURES 50)
-set(CMAKE_CUDA_HOST_COMPILER /usr/bin/g++-13)
+# set(CMAKE_CUDA_HOST_COMPILER /usr/bin/g++-13)
 
 project(ProjektRownolegle LANGUAGES CUDA CXX)
 
