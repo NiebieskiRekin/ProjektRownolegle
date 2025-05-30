@@ -6,6 +6,8 @@
 - g++-13
 - cuda
 - openmp
+- google benchmark
+- gtest
 
 Możliwe, że na innym systemie zależności będą w innym miejscu. Należy podmienić te linie w `CMakeLists.txt`
 ```
@@ -35,6 +37,7 @@ set(CMAKE_CUDA_HOST_COMPILER /usr/bin/g++-13)
 
 ## Uruchomienie
 
-Po pomyślnej kompilacji w katalogu `build` pojawią się 2 pliki wykonywalne:
+Po pomyślnej kompilacji w katalogu `build` pojawią się 3 pliki wykonywalne:
 - `main` z kodem aplikacji
-- `main_test` z testami aplikacji
+- `main_test` z testami jednostkowymi funkcji
+- `main_benchmark` z testami wydajności poszczególnych implementacji
