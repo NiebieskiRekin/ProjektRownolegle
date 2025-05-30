@@ -6,9 +6,9 @@
 #include <fstream>
 #include <chrono>
 
-// #include "md5_cuda.cuh"
 #include "md5_openmp.hpp"
 #include "md5_sequential.hpp"
+#include "md5_cuda.cuh"
 
 size_t get_file_size(std::ifstream& file){
     std::streampos begin,end;
@@ -37,23 +37,22 @@ int main(int argc, char** argv) {
     }
 
     if (mode == "CUDA"){
-        exit(1);
-        // for (const auto& filename : files){
-            // std::ifstream file(filename,std::ios::in|std::ios::binary|std::ios::ate);
-            // if (!file.is_open()){
-            //     std::cerr << "Błąd otwarcia pliku: " << filename << std::endl;
-            //     exit(1);
-            // }
-            // size_t data_len = get_file_size(file);
-            // auto data = new char[data_len];
-            // file.read(data,data_len);        
-            // file.close();
-            // const auto start{std::chrono::high_resolution_clock::now()};
-            // hashes.push_back(hash_cuda(data,data_len));
-            // const auto finish{std::chrono::high_resolution_clock::now()};
-            // delete[] data;
-            // times.push_back(finish-start);
-        // }
+        for (const auto& filename : files){
+            std::ifstream file(filename,std::ios::in|std::ios::binary|std::ios::ate);
+            if (!file.is_open()){
+                std::cerr << "Błąd otwarcia pliku: " << filename << std::endl;
+                exit(1);
+            }
+            size_t data_len = get_file_size(file);
+            auto data = new char[data_len];
+            file.read(data,data_len);        
+            file.close();
+            const auto start{std::chrono::high_resolution_clock::now()};
+            hashes.push_back(hash_cuda(data,data_len));
+            const auto finish{std::chrono::high_resolution_clock::now()};
+            delete[] data;
+            times.push_back(finish-start);
+        }
     } else if (mode == "OPENMP") {
         for (const auto& filename : files){
             std::ifstream file(filename,std::ios::in|std::ios::binary|std::ios::ate);
