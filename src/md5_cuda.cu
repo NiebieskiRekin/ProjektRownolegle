@@ -9,19 +9,19 @@ __device__ const uint32_t s_dev[64] = {
 };
 
 __device__ const uint32_t K_dev[64] = {
-    3614090360U, 3905402710U, 606105819U,  3250441966U, 4118548399U, 1200080426U,
-    2821735955U, 4249261313U, 1770035416U, 2336552879U, 4294925233U, 2304563134U,
-    1804603682U, 4254626195U, 2792965006U, 1236535329U, 4129170786U, 3225465664U,
-    643717713U,  3921069994U, 3593408605U, 38016083U,   3634488961U, 3889429448U,
-    568446438U,  3275163606U, 4107603335U, 1163531501U, 2850285829U, 4243563512U,
-    1735328473U, 2368359562U, 4294588738U, 2272392833U, 1839030562U, 4259657740U,
-    2763975236U, 1272893353U, 4139469664U, 3200236656U, 681279174U,  3936430074U,
-    3572445317U, 76029189U,   3654602809U, 3873151461U, 530742520U,  3299628645U,
-    4096336452U, 1126891415U, 2878612391U, 4237533241U, 1700485571U, 2399980690U,
-    4293915773U, 2240044497U, 1873313359U, 4264355552U, 2734768916U, 1309151649U,
-    4149444226U, 3174756917U, 718787259U,  3951481745U
+    3614090360, 3905402710, 606105819, 3250441966, 4118548399, 1200080426,
+    2821735955, 4249261313, 1770035416, 2336552879, 4294925233, 2304563134,
+    1804603682, 4254626195, 2792965006, 1236535329, 4129170786, 3225465664,
+    643717713, 3921069994, 3593408605, 38016083, 3634488961, 3889429448,
+    568446438, 3275163606, 4107603335, 1163531501, 2850285829, 4243563512,
+    1735328473, 2368359562, 4294588738, 2272392833, 1839030562, 4259657740,
+    2763975236, 1272893353, 4139469664, 3200236656, 681279174, 3936430074,
+    3572445317, 76029189, 3654602809, 3873151461, 530742520, 3299628645,
+    4096336452, 1126891415, 2878612391, 4237533241, 1700485571, 2399980690,
+    4293915773, 2240044497, 1873313359, 4264355552, 2734768916, 1309151649,
+    4149444226, 3174756917, 718787259, 3951481745
 };
-__device__ const uint32_t initial_128_bit_state_dev[4] = {0x67452301U, 0xefcdab89U, 0x98badcfeU, 0x10325476U};
+__device__ const uint32_t initial_128_bit_state_dev[4] = {0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476};
 
 
 // Device function for left rotation
@@ -90,6 +90,66 @@ __global__ void process_chunks_kernel(
     }
 }
 
+std::array<uint8_t, 16> hash_cuda(const void* input_bs, uint64_t input_size, int threadsPerBlock) {
+    const uint8_t* input = static_cast<const uint8_t*>(input_bs);
+
+    // Preprocess the input on the host
+    std::vector<uint8_t> padded_message = preprocess(input, input_size);
+    uint64_t padded_size = padded_message.size();
+    uint64_t num_chunks = padded_size / 64;
+
+    // Allocate device memory for the padded message
+    uint8_t* d_padded_message;
+    cudaMalloc(&d_padded_message, padded_size);
+    cudaMemcpy(d_padded_message, padded_message.data(), padded_size, cudaMemcpyHostToDevice);
+
+    // Allocate device memory for the intermediate states
+    uint32_t* d_states;
+    cudaMalloc(&d_states, num_chunks * 4 * sizeof(uint32_t));
+
+    // Configure the grid and block dimensions
+    int numBlocks = (num_chunks + threadsPerBlock - 1) / threadsPerBlock;
+
+    // Launch the CUDA kernel
+    process_chunks_kernel<<<numBlocks, threadsPerBlock>>>(
+        d_padded_message,
+        num_chunks,
+        d_states
+    );
+
+    // Check for CUDA errors
+    cudaError_t error = cudaGetLastError();
+    if (error != cudaSuccess) {
+        std::cerr << "CUDA Error: " << cudaGetErrorString(error) << std::endl;
+        cudaFree(d_padded_message);
+        cudaFree(d_states);
+        return std::array<uint8_t, 16>();
+    }
+
+    // Copy the intermediate states back to the host
+    std::vector<uint32_t> h_states(num_chunks * 4);
+    cudaMemcpy(h_states.data(), d_states, num_chunks * 4 * sizeof(uint32_t), cudaMemcpyDeviceToHost);
+
+    // Perform the final sequential accumulation on the host
+    std::array<uint32_t, 4> final_state = initial_128_bit_state;
+    for (uint64_t i = 0; i < num_chunks; ++i) {
+        final_state[0] += h_states[i * 4 + 0];
+        final_state[1] += h_states[i * 4 + 1];
+        final_state[2] += h_states[i * 4 + 2];
+        final_state[3] += h_states[i * 4 + 3];
+    }
+
+    // Build the signature on the host
+    auto signature = build_signature(final_state[0], final_state[1], final_state[2], final_state[3]);
+
+    // Free device memory
+    cudaFree(d_padded_message);
+    cudaFree(d_states);
+
+    return signature;
+}
+
+
 
 std::array<uint8_t, 16> hash_cuda(const void* input_bs, uint64_t input_size) {
     const uint8_t* input = static_cast<const uint8_t*>(input_bs);
@@ -101,15 +161,15 @@ std::array<uint8_t, 16> hash_cuda(const void* input_bs, uint64_t input_size) {
 
     // Allocate device memory for the padded message
     uint8_t* d_padded_message;
-    cudaMalloc((void**)&d_padded_message, padded_size);
+    cudaMalloc(&d_padded_message, padded_size);
     cudaMemcpy(d_padded_message, padded_message.data(), padded_size, cudaMemcpyHostToDevice);
 
     // Allocate device memory for the intermediate states
     uint32_t* d_states;
-    cudaMalloc((void**)&d_states, num_chunks * 4 * sizeof(uint32_t));
+    cudaMalloc(&d_states, num_chunks * 4 * sizeof(uint32_t));
 
     // Configure the grid and block dimensions
-    int threadsPerBlock = 256;
+    int threadsPerBlock = 1024;
     int numBlocks = (num_chunks + threadsPerBlock - 1) / threadsPerBlock;
 
     // Launch the CUDA kernel

@@ -37,6 +37,18 @@ int main(int argc, char** argv) {
     }
 
     if (mode == "CUDA"){
+        int maxThreadsPerBlock = 1024;
+
+        int deviceCount;
+        cudaGetDeviceCount(&deviceCount);
+        if (deviceCount > 0){
+            cudaDeviceProp prop{};
+            cudaGetDeviceProperties(&prop, 0);
+            maxThreadsPerBlock = prop.maxThreadsPerBlock;
+        } else {
+            exit(1);
+        }
+
         for (const auto& filename : files){
             std::ifstream file(filename,std::ios::in|std::ios::binary|std::ios::ate);
             if (!file.is_open()){
@@ -48,7 +60,7 @@ int main(int argc, char** argv) {
             file.read(data,data_len);        
             file.close();
             const auto start{std::chrono::high_resolution_clock::now()};
-            hashes.push_back(hash_cuda(data,data_len));
+            hashes.push_back(hash_cuda(data,data_len,maxThreadsPerBlock));
             const auto finish{std::chrono::high_resolution_clock::now()};
             delete[] data;
             times.push_back(finish-start);
