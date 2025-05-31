@@ -40,14 +40,10 @@ __global__ void process_chunks_kernel(
     if (chunk_id < num_chunks) {
         uint64_t chunk_start = chunk_id * 64;
         uint32_t blocks[16]{};
-        uint32_t a0 = initial_128_bit_state_dev[0];
-        uint32_t b0 = initial_128_bit_state_dev[1];
-        uint32_t c0 = initial_128_bit_state_dev[2];
-        uint32_t d0 = initial_128_bit_state_dev[3];
-        uint32_t A = a0;
-        uint32_t B = b0;
-        uint32_t C = c0;
-        uint32_t D = d0;
+        uint32_t A = initial_128_bit_state_dev[0];
+        uint32_t B = initial_128_bit_state_dev[1];
+        uint32_t C = initial_128_bit_state_dev[2];
+        uint32_t D = initial_128_bit_state_dev[3];
 
         // First, build the 16 32-bits blocks from the chunk
         for (uint8_t bid = 0; bid < 16; bid++) {
@@ -90,6 +86,31 @@ __global__ void process_chunks_kernel(
     }
 }
 
+void combineStates(std::vector<uint32_t>& chunk_states, uint64_t i, uint64_t next) {
+    chunk_states[i+0] = chunk_states[i+0] + chunk_states[i+next+0];
+    chunk_states[i+1] = chunk_states[i+1] + chunk_states[i+next+1];
+    chunk_states[i+2] = chunk_states[i+2] + chunk_states[i+next+2];
+    chunk_states[i+3] = chunk_states[i+3] + chunk_states[i+next+3];
+}
+
+void merkleTreeReduce(std::vector<uint32_t>& chunk_states){
+    // Merkle tree-like reduction of chunk states
+    uint64_t num_chunks = chunk_states.size() /4;
+    uint64_t num_levels = std::ceil(std::log2(num_chunks));
+    uint64_t next = 1;
+    uint64_t num_nodes_at_level = num_chunks;
+    for (uint64_t level = 1; level <= num_levels; ++level) {
+        uint64_t skip = next<<1;
+        for (uint64_t i = 0; i+next < num_nodes_at_level; i += skip) {
+            combineStates(chunk_states, i, next);
+        }   
+
+        num_nodes_at_level = (num_nodes_at_level>>1) + (num_nodes_at_level%2);
+        next = skip;
+    }
+}
+
+
 std::array<uint8_t, 16> hash_cuda(const void* input_bs, uint64_t input_size, int threadsPerBlock) {
     const uint8_t* input = static_cast<const uint8_t*>(input_bs);
 
@@ -131,16 +152,8 @@ std::array<uint8_t, 16> hash_cuda(const void* input_bs, uint64_t input_size, int
     cudaMemcpy(h_states.data(), d_states, num_chunks * 4 * sizeof(uint32_t), cudaMemcpyDeviceToHost);
 
     // Perform the final sequential accumulation on the host
-    std::array<uint32_t, 4> final_state = initial_128_bit_state;
-    for (uint64_t i = 0; i < num_chunks; ++i) {
-        final_state[0] += h_states[i * 4 + 0];
-        final_state[1] += h_states[i * 4 + 1];
-        final_state[2] += h_states[i * 4 + 2];
-        final_state[3] += h_states[i * 4 + 3];
-    }
-
-    // Build the signature on the host
-    auto signature = build_signature(final_state[0], final_state[1], final_state[2], final_state[3]);
+    merkleTreeReduce(h_states);
+    auto signature = build_signature(h_states[0], h_states[1], h_states[2], h_states[3]);
 
     // Free device memory
     cudaFree(d_padded_message);
