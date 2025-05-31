@@ -57,7 +57,7 @@ static void BM_CudaKernel(benchmark::State& state) {
 BENCHMARK(BM_CudaKernel)
     // ->MinWarmUpTime(10)
     ->ArgsProduct({
-        benchmark::CreateRange(1024, 1024UL * 1024UL * 1024UL, 256), // Data size
+        benchmark::CreateRange(1024, 1024UL * 1024UL * 1024UL, 2), // Data size
         {16, 32, 64, 128, 256, 512, 1024} // Block and thread dimensions
     })
     ->Unit(benchmark::kMicrosecond);

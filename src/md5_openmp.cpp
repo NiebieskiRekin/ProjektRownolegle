@@ -22,7 +22,6 @@ void combineStates(const std::array<uint32_t, 4>& state1, const std::array<uint3
 std::array<uint8_t, 16> hash_openmp(const void *input_bs, uint64_t input_size){
     auto *input = static_cast<const uint8_t *>(input_bs);
 
-    // The initial 128-bit state
     std::array<uint32_t, 4> state = initial_128_bit_state;
 
     auto padded_message = preprocess(input,input_size);
@@ -42,24 +41,18 @@ std::array<uint8_t, 16> hash_openmp(const void *input_bs, uint64_t input_size){
 
     for (uint64_t level = 1; level <= num_levels; ++level) {
         uint64_t num_nodes_at_level = levels[level - 1].size();
-        // #pragma omp parallel
         for (uint64_t i = 0; i < num_nodes_at_level; i += 2) {
             if (i + 1 < num_nodes_at_level) {
                 std::array<uint32_t, 4> res;
                 combineStates(levels[level - 1][i], levels[level - 1][i + 1],res);
-
-                // #pragma omp critical
                 levels[level].push_back(res);
             } else {
-                // #pragma omp critical
                 levels[level].push_back(levels[level - 1][i]); // If odd number of nodes, carry the last one up
             }
         }
     }
 
     const auto& final_state = levels[num_levels][0];
-
-    // Build signature from the final state
     auto sig = build_signature(final_state[0],final_state[1],final_state[2],final_state[3]);
     return sig;
 }

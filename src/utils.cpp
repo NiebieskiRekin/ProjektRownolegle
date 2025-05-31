@@ -1,11 +1,6 @@
 #include "utils.hpp"
 #include <algorithm>
 
-const std::string characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-std::random_device random_device;
-std::mt19937 generator(random_device());
-std::uniform_int_distribution<> distribution(0, characters.size() - 1);
-
 uint32_t leftRotate32bits(uint32_t n, std::size_t rotate)
 {
     return (n << rotate) | (n >> (32 - rotate));
@@ -99,11 +94,4 @@ std::array<uint8_t, 16> build_signature(uint32_t a0, uint32_t b0, uint32_t c0, u
         sig[i + 12] = (d0 >> (8 * i)) & 0xFF;
     }
     return sig;
-}
-
-std::string generate_random_string(size_t length) {
-    std::string random_string(characters);
-    std::shuffle(random_string.begin(), random_string.end(), generator);
-
-    return random_string.substr(0, length);
 }
