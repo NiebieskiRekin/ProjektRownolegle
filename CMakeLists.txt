@@ -17,8 +17,8 @@ find_package(CUDAToolkit REQUIRED)
 find_package(OpenMP COMPONENTS CXX)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
-# include(GoogleTest REQUIRED)
-# set(GTEST_LIBRARIES gtest gtest_main)
+include(GoogleTest REQUIRED)
+set(GTEST_LIBRARIES gtest gtest_main)
 
 find_package(benchmark REQUIRED)
 
@@ -47,15 +47,15 @@ target_sources(main PRIVATE ${PROJECT_SOURCES})
 target_include_directories(main PRIVATE "src")
 target_link_libraries(main ${OpenMP_LIBRARIES} CUDA::cudart)
 
-# # Define test executable target
-# add_executable(main_test)
-# # target_sources(main_test PRIVATE ${PROJECT_SOURCES})
-# target_sources(main_test PRIVATE ${PROJECT_TEST_SOURCES})
-# target_include_directories(main_test PRIVATE "src")
-# target_include_directories(main_test PRIVATE "test")
-# target_link_libraries(main_test ${GTEST_LIBRARIES} ${OpenMP_LIBRARIES}  CUDA::cudart)
-# enable_testing(false)
-# gtest_discover_tests(main_test)
+# Define test executable target
+add_executable(main_test)
+# target_sources(main_test PRIVATE ${PROJECT_SOURCES})
+target_sources(main_test PRIVATE ${PROJECT_TEST_SOURCES})
+target_include_directories(main_test PRIVATE "src")
+target_include_directories(main_test PRIVATE "test")
+target_link_libraries(main_test ${GTEST_LIBRARIES} ${OpenMP_LIBRARIES}  CUDA::cudart)
+enable_testing(false)
+gtest_discover_tests(main_test)
 
 # Define benchmark executable target
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
